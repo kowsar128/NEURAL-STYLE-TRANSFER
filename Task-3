@@ -1,0 +1,55 @@
+try:
+    import tensorflow as tf
+    import tensorflow_hub as hub
+except ModuleNotFoundError:
+    print("Error: TensorFlow or TensorFlow Hub is not installed. Install them using 'pip install tensorflow tensorflow-hub'.")
+    exit(1)
+
+import matplotlib.pyplot as plt
+import numpy as np
+import PIL.Image
+
+def load_image(image_path, target_size=(512, 512)):
+    img = PIL.Image.open(image_path)
+    img = img.resize(target_size)
+    img = np.array(img) / 255.0
+    return img[np.newaxis, ...]
+
+def show_image(image, title=None):
+    image = np.squeeze(image, axis=0)
+    plt.imshow(image)
+    if title:
+        plt.title(title)
+    plt.axis('off')
+    plt.show()
+
+def neural_style_transfer(content_path, style_path, output_path='stylized_output.png'):
+    # Load images
+    content_image = load_image(content_path)
+    style_image = load_image(style_path)
+
+    try:
+        # Load pre-trained NST model from TensorFlow Hub
+        model = hub.load('https://tfhub.dev/google/magenta/arbitrary-image-stylization-v1-256/2')
+
+        # Stylize the image
+        stylized_image = model(tf.constant(content_image), tf.constant(style_image))[0]
+
+        # Display results
+        show_image(content_image, "Content Image")
+        show_image(style_image, "Style Image")
+        show_image(stylized_image, "Stylized Image")
+
+        # Save the output image
+        output = PIL.Image.fromarray(np.uint8(stylized_image[0] * 255))
+        output.save(output_path)
+
+    except Exception as e:
+        print(f"Error during style transfer: {e}")
+
+if __name__ == '__main__':
+    content_image_path = 'path/to/your/content_image.jpg'
+    style_image_path = 'path/to/your/style_image.jpg'
+    output_image_path = 'stylized_output.png'
+
+    neural_style_transfer(content_image_path, style_image_path, output_image_path)
